@@ -11,8 +11,6 @@
 ---
 
 ## 📂 Project Structure
-
-```bash
 Multiple-IP-Tools/
 ├── All-in-one.html
 ├── Junk-Code-Extractor.html
