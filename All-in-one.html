@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Network Node Tool - Extract, Check & Filter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 400px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .panel h3 {
+            color: white;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 12px;
+            border-radius: 8px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            margin-right: 10px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .result-box {
+            background: #0a0a12;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 300px;
+            max-height: 350px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #2ecc71;
+            white-space: pre-line;
+            word-break: break-all;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        .working-count {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .dead-count {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .testnet-count {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            color: white;
+            font-size: 0.7rem;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .copy-btn {
+            background: #3498db;
+        }
+
+        .clear-btn {
+            background: #e74c3c;
+        }
+
+        .extract-btn {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .filter-info {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 3px solid #3498db;
+            padding: 8px;
+            margin-top: 12px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            margin-top: 0;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+        }
+
+        .tab-btn.active {
+            background: rgba(102, 126, 234, 0.5);
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .small-text {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌐 Pi Network Node Tool</h1>
+    <div class="subtitle">Extract addresses from junk HTML → Check live nodes → Filter Pi Network (not Testnet)</div>
+
+    <div class="row">
+        <!-- Left Panel -->
+        <div class="panel">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="extract">📋 Step 1: Extract IPs</button>
+                <button class="tab-btn" data-tab="check">🔍 Step 2: Check & Filter</button>
+            </div>
+
+            <div id="extractTab" class="tab-content active">
+                <h3>📋 Paste Junk HTML / Table Code</h3>
+                <textarea id="junkInput" placeholder='Paste your junk HTML table here...
+
+Example:
+<table>
+  <tr>
+    <td><span class="badge bg-success">Connected</span></td>
+    <td><code>35.228.152.141:31402</code></td>
+  </tr>
+</table>'></textarea>
+                <div>
+                    <button id="extractBtn" class="extract-btn">🔧 EXTRACT CONNECTED ADDRESSES</button>
+                    <button id="clearExtractBtn" class="clear-btn">🗑 Clear</button>
+                </div>
+                <div class="filter-info">
+                    ✅ Extracts addresses from rows with "Connected" status<br>
+                    🔄 Automatically converts port 31402 → 31401
+                </div>
+                <div class="stats" id="extractStats">
+                    📊 Ready - Paste junk HTML and click EXTRACT
+                </div>
+            </div>
+
+            <div id="checkTab" class="tab-content">
+                <h3>📋 IP:port List (one per line)</h3>
+                <textarea id="ipListInput" placeholder='Paste IP:port list here (one per line)...
+
+Example:
+34.47.29.105:31401
+35.228.152.141:31401'></textarea>
+                <div>
+                    <button id="checkBtn">🔍 CHECK & FILTER PI NETWORK</button>
+                    <button id="clearCheckBtn" class="clear-btn">🗑 Clear</button>
+                </div>
+                <div class="filter-info">
+                    🔍 <strong>Filter:</strong> Only IPs with <code>"network_passphrase": "Pi Network"</code> will be shown.<br>
+                    ❌ IPs with "Pi Testnet" are automatically excluded.
+                </div>
+                <div class="stats" id="inputStats">
+                    📊 Ready - Paste IP list and click CHECK
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Results -->
+        <div class="panel">
+            <h3>✅ RESULTS: Pi Network Nodes (with http://)</h3>
+            <div class="result-box" id="resultBox">
+                💡 Use Step 1 to extract IPs from junk HTML, then Step 2 to check them<br><br>
+                <strong>Option 1:</strong> Paste junk HTML → Extract IPs → Copy results → Go to Step 2<br>
+                <strong>Option 2:</strong> Directly paste IP:port list → Check & Filter
+            </div>
+            <div>
+                <button id="copyResultBtn" class="copy-btn">📋 Copy Pi Network URLs</button>
+                <button id="clearResultBtn" class="clear-btn">🗑 Clear Results</button>
+            </div>
+            <div class="stats" id="resultStats">
+                📊 No results yet
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">Checking 0/0 IPs...</div>
+    </div>
+</div>
+
+<script>
+    // DOM Elements
+    const junkInput = document.getElementById('junkInput');
+    const extractBtn = document.getElementById('extractBtn');
+    const clearExtractBtn = document.getElementById('clearExtractBtn');
+    const extractStats = document.getElementById('extractStats');
+    
+    const ipInput = document.getElementById('ipListInput');
+    const checkBtn = document.getElementById('checkBtn');
+    const clearCheckBtn = document.getElementById('clearCheckBtn');
+    const inputStats = document.getElementById('inputStats');
+    
+    const resultBox = document.getElementById('resultBox');
+    const resultStats = document.getElementById('resultStats');
+    const copyResultBtn = document.getElementById('copyResultBtn');
+    const clearResultBtn = document.getElementById('clearResultBtn');
+    
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            if (tabId === 'extract') {
+                document.getElementById('extractTab').classList.add('active');
+            } else {
+                document.getElementById('checkTab').classList.add('active');
+            }
+        });
+    });
+    
+    // Store results
+    let workingIPs = [];
+    let deadIPs = [];
+    let testnetIPs = [];
+    let extractedIPs = [];
+    
+    // ============ EXTRACT FUNCTION ============
+    function extractAddressesFromJunk(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const tables = doc.querySelectorAll('table');
+        
+        if (tables.length === 0) {
+            return [];
+        }
+        
+        const connectedAddresses = [];
+        
+        tables.forEach(table => {
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 2) return;
+                
+                // Check if row has "Connected" status
+                let isConnected = false;
+                for (let i = 0; i < cells.length; i++) {
+                    const cellText = cells[i].innerText || cells[i].textContent || '';
+                    if (cellText.toLowerCase().includes('connected')) {
+                        isConnected = true;
+                        break;
+                    }
+                }
+                
+                if (!isConnected) return;
+                
+                // Extract address
+                let foundAddress = null;
+                const codeElements = row.querySelectorAll('code');
+                for (let code of codeElements) {
+                    const codeText = code.textContent.trim();
+                    if (codeText.match(/\d+\.\d+\.\d+\.\d+:\d+/)) {
+                        foundAddress = codeText;
+                        break;
+                    }
+                }
+                
+                if (!foundAddress) {
+                    for (let i = 0; i < cells.length; i++) {
+                        const cellText = cells[i].textContent.trim();
+                        if (cellText.match(/\d+\.\d+\.\d+\.\d+:\d+/)) {
+                            foundAddress = cellText;
+                            break;
+                        }
+                    }
+                }
+                
+                if (foundAddress) {
+                    let modifiedAddress = foundAddress;
+                    if (foundAddress.includes(':31402')) {
+                        modifiedAddress = foundAddress.replace(/:31402\b/g, ':31401');
+                    }
+                    connectedAddresses.push(modifiedAddress);
+                }
+            });
+        });
+        
+        return [...new Set(connectedAddresses)];
+    }
+    
+    function performExtraction() {
+        const rawJunk = junkInput.value;
+        if (!rawJunk.trim()) {
+            extractStats.innerHTML = '⚠️ Please paste junk HTML/table code first.';
+            resultBox.innerHTML = '⚠️ No HTML to extract. Paste junk code in Step 1.';
+            return;
+        }
+        
+        extractStats.innerHTML = '🔄 Extracting addresses...';
+        
+        setTimeout(() => {
+            const addresses = extractAddressesFromJunk(rawJunk);
+            extractedIPs = addresses;
+            
+            if (addresses.length === 0) {
+                extractStats.innerHTML = '❌ No "Connected" nodes found.';
+                resultBox.innerHTML = '❌ No addresses with "Connected" status found.\n\nMake sure your HTML contains rows with "Connected" badge.';
+                return;
+            }
+            
+            // Display extracted IPs
+            let html = `<div style="color: #2ecc71; margin-bottom: 10px;">✅ EXTRACTED IPs (${addresses.length}):</div>`;
+            for (const ip of addresses) {
+                html += `<div>📌 ${ip}</div>`;
+            }
+            html += `\n\n<hr><div class="small-text">💡 Copy these IPs, go to Step 2, paste and click CHECK</div>`;
+            resultBox.innerHTML = html;
+            
+            extractStats.innerHTML = `📋 Extracted ${addresses.length} IP:port addresses (31402→31401 applied)`;
+            
+            // Also fill the IP list textarea for convenience
+            ipInput.value = addresses.join('\n');
+            inputStats.innerHTML = `📋 Loaded ${addresses.length} extracted IPs | Click CHECK to verify`;
+        }, 10);
+    }
+    
+    // ============ CHECK & FILTER FUNCTIONS ============
+    function parseIPList(text) {
+        const lines = text.split(/\r?\n/);
+        const ips = [];
+        for (let line of lines) {
+            line = line.trim();
+            const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
+            if (match) {
+                ips.push(match[1]);
+            } else if (line.includes(':') && !line.startsWith('http')) {
+                ips.push(line);
+            }
+        }
+        return [...new Set(ips)];
+    }
+    
+    async function checkIPAndNetwork(ipPort, timeout = 8000) {
+        const url = `http://${ipPort}`;
+        
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                signal: controller.signal,
+                mode: 'cors',
+                headers: { 'Accept': 'application/json' }
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch(e) {
+                    return { live: false, network: null, error: 'Invalid JSON' };
+                }
+                
+                if (data && data.network_passphrase) {
+                    const network = data.network_passphrase;
+                    if (network === "Pi Network") {
+                        return { live: true, network: 'Pi Network', url: url };
+                    } else if (network === "Pi Testnet") {
+                        return { live: false, network: 'Pi Testnet', error: 'Testnet - excluded' };
+                    } else {
+                        return { live: false, network: network, error: 'Unknown network' };
+                    }
+                } else {
+                    return { live: false, network: null, error: 'No network_passphrase field' };
+                }
+            } else {
+                return { live: false, network: null, error: `HTTP ${response.status}` };
+            }
+        } catch (error) {
+            return { live: false, network: null, error: error.message };
+        }
+    }
+    
+    async function checkAllIPs(ips) {
+        workingIPs = [];
+        deadIPs = [];
+        testnetIPs = [];
+        
+        const total = ips.length;
+        let completed = 0;
+        
+        progressContainer.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressText.innerText = `Checking 0/${total} IPs...`;
+        
+        resultBox.innerHTML = '<div style="color: #f1c40f;">⏳ Checking IPs and filtering Pi Network nodes...</div>\n\n';
+        
+        const concurrency = 3;
+        const results = [];
+        
+        for (let i = 0; i < ips.length; i += concurrency) {
+            const batch = ips.slice(i, i + concurrency);
+            const batchResults = await Promise.all(batch.map(async (ip) => {
+                const result = await checkIPAndNetwork(ip);
+                completed++;
+                const percent = (completed / total) * 100;
+                progressFill.style.width = `${percent}%`;
+                progressText.innerText = `Checking ${completed}/${total} IPs...`;
+                return { ip, ...result };
+            }));
+            results.push(...batchResults);
+            
+            const tempWorking = results.filter(r => r.live && r.network === 'Pi Network').map(r => `http://${r.ip}`);
+            resultBox.innerHTML = `<div style="color: #f1c40f;">⏳ Checking: ${completed}/${total} done</div>
+                                    <div style="color: #2ecc71; margin-top: 10px;">✅ Pi Network found: ${tempWorking.length}</div>
+                                    <pre style="margin-top: 10px;">${tempWorking.slice(0, 10).join('\n')}${tempWorking.length > 10 ? '\n...' : ''}</pre>`;
+        }
+        
+        for (const result of results) {
+            if (result.live && result.network === 'Pi Network') {
+                workingIPs.push(result.ip);
+            } else if (result.network === 'Pi Testnet') {
+                testnetIPs.push(result.ip);
+            } else {
+                deadIPs.push(result.ip);
+            }
+        }
+        
+        return { working: workingIPs, dead: deadIPs, testnet: testnetIPs };
+    }
+    
+    function displayResults() {
+        if (workingIPs.length === 0 && deadIPs.length === 0 && testnetIPs.length === 0) {
+            resultBox.innerHTML = '❌ No IPs found or checked. Paste IP:port list and click CHECK.';
+            resultStats.innerHTML = '📊 No results';
+            return;
+        }
+        
+        let html = '';
+        
+        if (workingIPs.length > 0) {
+            html += `<div style="color: #2ecc71; margin-bottom: 15px;">✅ PI NETWORK NODES (${workingIPs.length}):</div>`;
+            html += `<div style="margin-bottom: 20px;">`;
+            for (const ip of workingIPs) {
+                html += `<div style="padding: 6px 0; font-family: monospace;">🌐 http://${ip}</div>`;
+            }
+            html += `</div>`;
+        } else {
+            html += `<div style="color: #e74c3c;">❌ No Pi Network nodes found</div>`;
+        }
+        
+        if (testnetIPs.length > 0) {
+            html += `<hr><div style="color: #f39c12; margin-top: 15px;">⚠️ EXCLUDED - Pi Testnet (${testnetIPs.length}):</div>`;
+            html += `<div style="font-size: 10px; color: #888; max-height: 120px; overflow-y: auto;">`;
+            for (const ip of testnetIPs.slice(0, 10)) {
+                html += `<div>🔸 http://${ip} (Testnet - ignored)</div>`;
+            }
+            if (testnetIPs.length > 10) {
+                html += `<div>... and ${testnetIPs.length - 10} more</div>`;
+            }
+            html += `</div>`;
+        }
+        
+        resultBox.innerHTML = html;
+        
+        resultStats.innerHTML = `
+            🟢 Pi Network: <span class="working-count">${workingIPs.length}</span> | 
+            🟡 Pi Testnet: <span class="testnet-count">${testnetIPs.length}</span> | 
+            🔴 Dead: <span class="dead-count">${deadIPs.length}</span> | 
+            📊 Total: ${workingIPs.length + deadIPs.length + testnetIPs.length}
+        `;
+    }
+    
+    async function performCheck() {
+        const rawText = ipInput.value;
+        if (!rawText.trim()) {
+            resultBox.innerHTML = '⚠️ Please paste your IP:port list first.';
+            resultStats.innerHTML = '📊 No IPs to check';
+            return;
+        }
+        
+        const ips = parseIPList(rawText);
+        
+        if (ips.length === 0) {
+            resultBox.innerHTML = '❌ No valid IP:port addresses found.\n\nMake sure each line contains: 192.168.1.1:31401';
+            resultStats.innerHTML = '📊 No valid IPs detected';
+            return;
+        }
+        
+        inputStats.innerHTML = `🔍 Found ${ips.length} IP(s) to check... Scanning for Pi Network`;
+        resultBox.innerHTML = `🔍 Scanning ${ips.length} IP(s) for Pi Network nodes...<br><br>📡 Checking each IP...`;
+        
+        checkBtn.disabled = true;
+        checkBtn.textContent = '⏳ CHECKING...';
+        
+        await checkAllIPs(ips);
+        displayResults();
+        
+        checkBtn.disabled = false;
+        checkBtn.textContent = '🔍 CHECK & FILTER PI NETWORK';
+        
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+        }, 1000);
+    }
+    
+    function copyWorkingIPs() {
+        if (workingIPs.length === 0) {
+            alert('No Pi Network IPs found. Run the check first or extract first.');
+            return;
+        }
+        
+        const textToCopy = workingIPs.map(ip => `http://${ip}`).join('\n');
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalText = copyResultBtn.textContent;
+            copyResultBtn.textContent = '✅ Copied!';
+            setTimeout(() => {
+                copyResultBtn.textContent = '📋 Copy Pi Network URLs';
+            }, 2000);
+        }).catch(() => {
+            alert('Could not copy. Select manually.');
+        });
+    }
+    
+    function clearResults() {
+        resultBox.innerHTML = '💡 Results cleared. Use Step 1 or Step 2 to start over.';
+        resultStats.innerHTML = '📊 No results';
+        workingIPs = [];
+        deadIPs = [];
+        testnetIPs = [];
+        progressContainer.style.display = 'none';
+    }
+    
+    function clearExtract() {
+        junkInput.value = '';
+        extractStats.innerHTML = '📊 Ready - Paste junk HTML and click EXTRACT';
+    }
+    
+    function clearCheck() {
+        ipInput.value = '';
+        inputStats.innerHTML = '📊 Ready - Paste IP list and click CHECK';
+    }
+    
+    // Event listeners
+    extractBtn.addEventListener('click', performExtraction);
+    clearExtractBtn.addEventListener('click', clearExtract);
+    checkBtn.addEventListener('click', performCheck);
+    clearCheckBtn.addEventListener('click', clearCheck);
+    copyResultBtn.addEventListener('click', copyWorkingIPs);
+    clearResultBtn.addEventListener('click', clearResults);
+</script>
+</body>
+</html>

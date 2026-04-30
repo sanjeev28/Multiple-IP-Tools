@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Checker - Find Working Nodes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .row {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 350px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .panel h3 {
+            color: white;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            margin-right: 10px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .result-box {
+            background: #0a0a12;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 400px;
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #2ecc71;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .working-count {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .dead-count {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            color: white;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .ip-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ip-working {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+        }
+
+        .ip-dead {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 3px solid #e74c3c;
+            opacity: 0.7;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .badge-working {
+            background: #2ecc71;
+            color: #000;
+        }
+
+        .badge-dead {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .checking {
+            background: rgba(241, 196, 15, 0.2);
+            border-left: 3px solid #f1c40f;
+        }
+
+        .copy-btn {
+            background: #3498db;
+        }
+
+        hr {
+            border-color: #333;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌐 Node IP Checker</h1>
+    <div class="subtitle">Paste your IP:port list → Check which ones are LIVE → Get final working list</div>
+
+    <div class="row">
+        <!-- Left Panel: Input -->
+        <div class="panel">
+            <h3>📋 Step 1: Paste your IP:port list</h3>
+            <textarea id="ipListInput" placeholder='Paste your IP:port list here (one per line)...
+
+Example:
+34.47.29.105:31401
+35.228.152.141:31401
+34.88.93.19:31401
+
+Or paste the whole extracted output'></textarea>
+            <div>
+                <button id="checkBtn">🔍 CHECK WORKING IPS</button>
+                <button id="clearBtn" class="copy-btn" style="background:#555;">🗑 Clear</button>
+            </div>
+            <div class="stats" id="inputStats">
+                📊 Ready - Paste your IP list and click CHECK
+            </div>
+        </div>
+
+        <!-- Right Panel: Results -->
+        <div class="panel">
+            <h3>✅ Step 2: WORKING IPS (Final Result)</h3>
+            <div class="result-box" id="resultBox">
+                💡 Waiting for IP list...
+            </div>
+            <div>
+                <button id="copyResultBtn" class="copy-btn">📋 Copy Working IPs Only</button>
+            </div>
+            <div class="stats" id="resultStats">
+                📊 No results yet
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">Checking 0/0 IPs...</div>
+    </div>
+</div>
+
+<script>
+    const ipInput = document.getElementById('ipListInput');
+    const checkBtn = document.getElementById('checkBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyResultBtn');
+    const resultBox = document.getElementById('resultBox');
+    const resultStats = document.getElementById('resultStats');
+    const inputStats = document.getElementById('inputStats');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    // Store results
+    let workingIPs = [];
+    let deadIPs = [];
+
+    // Parse IP list from textarea (handles various formats)
+    function parseIPList(text) {
+        const lines = text.split(/\r?\n/);
+        const ips = [];
+        
+        for (let line of lines) {
+            line = line.trim();
+            // Match IP:port pattern (IPv4:port)
+            const match = line.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/);
+            if (match) {
+                ips.push(match[1]);
+            } else if (line.includes(':') && !line.startsWith('http')) {
+                // Also catch anything with colon that might be IP:port
+                ips.push(line);
+            }
+        }
+        
+        return [...new Set(ips)]; // Remove duplicates
+    }
+
+    // Check a single IP:port
+    async function checkIP(ipPort, timeout = 5000) {
+        // Try multiple endpoints to see if it's alive
+        const endpoints = [
+            `http://${ipPort}`,
+            `http://${ipPort}/fee_stats`,
+            `http://${ipPort}/ledgers?limit=1`,
+            `http://${ipPort}/health`
+        ];
+        
+        for (const url of endpoints) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    signal: controller.signal,
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // If we get any successful response (200-299) or even 404 (means server exists)
+                if (response.ok || response.status === 404 || response.status === 400) {
+                    return { live: true, url: url, status: response.status };
+                }
+            } catch (error) {
+                // Continue to next endpoint
+                continue;
+            }
+        }
+        
+        return { live: false, error: 'No response' };
+    }
+
+    // Check all IPs in batch
+    async function checkAllIPs(ips) {
+        workingIPs = [];
+        deadIPs = [];
+        
+        const total = ips.length;
+        let completed = 0;
+        
+        // Show progress bar
+        progressContainer.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressText.innerText = `Checking 0/${total} IPs...`;
+        
+        // Display checking status in result box temporarily
+        resultBox.innerHTML = '<div style="color: #f1c40f;">⏳ Checking IPs, please wait...</div>\n\n';
+        
+        // Check IPs with concurrency limit (5 at a time to avoid overwhelming)
+        const concurrency = 5;
+        const results = [];
+        
+        for (let i = 0; i < ips.length; i += concurrency) {
+            const batch = ips.slice(i, i + concurrency);
+            const batchResults = await Promise.all(batch.map(async (ip) => {
+                const result = await checkIP(ip);
+                completed++;
+                const percent = (completed / total) * 100;
+                progressFill.style.width = `${percent}%`;
+                progressText.innerText = `Checking ${completed}/${total} IPs...`;
+                
+                return { ip, ...result };
+            }));
+            results.push(...batchResults);
+            
+            // Update live display
+            const tempWorking = results.filter(r => r.live).map(r => r.ip);
+            resultBox.innerHTML = `<div style="color: #f1c40f;">⏳ Checking: ${completed}/${total} done</div>
+                                    <div style="color: #2ecc71; margin-top: 10px;">✅ Working so far: ${tempWorking.length}</div>
+                                    <pre style="margin-top: 10px;">${tempWorking.slice(0, 10).join('\n')}${tempWorking.length > 10 ? '\n...' : ''}</pre>`;
+        }
+        
+        // Process final results
+        for (const result of results) {
+            if (result.live) {
+                workingIPs.push(result.ip);
+            } else {
+                deadIPs.push(result.ip);
+            }
+        }
+        
+        return { working: workingIPs, dead: deadIPs };
+    }
+
+    // Display results with details
+    function displayResults() {
+        if (workingIPs.length === 0 && deadIPs.length === 0) {
+            resultBox.innerHTML = '❌ No IPs found or checked. Please paste IP:port list.';
+            resultStats.innerHTML = '📊 No results';
+            return;
+        }
+        
+        // Build result display
+        let html = '';
+        
+        if (workingIPs.length > 0) {
+            html += `<div style="color: #2ecc71; margin-bottom: 15px;">✅ WORKING IPS (${workingIPs.length}):</div>`;
+            html += `<div style="margin-bottom: 20px;">`;
+            for (const ip of workingIPs) {
+                html += `<div style="padding: 6px 0; font-family: monospace;">🌐 ${ip}</div>`;
+            }
+            html += `</div>`;
+        } else {
+            html += `<div style="color: #e74c3c;">❌ No working IPs found</div>`;
+        }
+        
+        if (deadIPs.length > 0 && false) { // Hide dead IPs by default, show only on demand
+            html += `<hr><div style="color: #e74c3c; margin-top: 15px;">💀 DEAD IPS (${deadIPs.length}):</div>`;
+            html += `<div style="font-size: 11px; color: #888; max-height: 200px; overflow-y: auto;">`;
+            for (const ip of deadIPs.slice(0, 20)) {
+                html += `<div>🔴 ${ip}</div>`;
+            }
+            if (deadIPs.length > 20) {
+                html += `<div>... and ${deadIPs.length - 20} more</div>`;
+            }
+            html += `</div>`;
+        }
+        
+        resultBox.innerHTML = html;
+        
+        // Update stats
+        resultStats.innerHTML = `
+            🟢 Working: <span class="working-count">${workingIPs.length}</span> | 
+            🔴 Dead: <span class="dead-count">${deadIPs.length}</span> | 
+            📊 Total: ${workingIPs.length + deadIPs.length}
+        `;
+        
+        inputStats.innerHTML = `📋 Parsed ${workingIPs.length + deadIPs.length} IP(s) | Found ${workingIPs.length} working`;
+    }
+
+    // Main check function
+    async function performCheck() {
+        const rawText = ipInput.value;
+        if (!rawText.trim()) {
+            resultBox.innerHTML = '⚠️ Please paste your IP:port list first.';
+            resultStats.innerHTML = '📊 No IPs to check';
+            return;
+        }
+        
+        const ips = parseIPList(rawText);
+        
+        if (ips.length === 0) {
+            resultBox.innerHTML = '❌ No valid IP:port addresses found in your input.\n\nMake sure each line contains something like: 192.168.1.1:31401';
+            resultStats.innerHTML = '📊 No valid IPs detected';
+            return;
+        }
+        
+        inputStats.innerHTML = `🔍 Found ${ips.length} IP(s) to check... Starting scan`;
+        resultBox.innerHTML = `🔍 Starting scan of ${ips.length} IP(s)...<br>This may take a moment depending on network.<br><br>📡 Checking each IP...`;
+        
+        // Disable button during check
+        checkBtn.disabled = true;
+        checkBtn.textContent = '⏳ CHECKING...';
+        
+        await checkAllIPs(ips);
+        
+        displayResults();
+        
+        // Re-enable button
+        checkBtn.disabled = false;
+        checkBtn.textContent = '🔍 CHECK WORKING IPS';
+        
+        // Hide progress bar after 1s
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+        }, 1000);
+    }
+
+    // Copy only working IPs
+    function copyWorkingIPs() {
+        if (workingIPs.length === 0) {
+            alert('No working IPs to copy. Run the check first.');
+            return;
+        }
+        
+        const textToCopy = workingIPs.join('\n');
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '✅ Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = '📋 Copy Working IPs Only';
+            }, 2000);
+        }).catch(() => {
+            alert('Could not copy. Select manually.');
+        });
+    }
+
+    // Clear everything
+    function clearAll() {
+        ipInput.value = '';
+        resultBox.innerHTML = '💡 Ready for IP list...';
+        resultStats.innerHTML = '📊 No results yet';
+        inputStats.innerHTML = '📊 Ready - Paste your IP list and click CHECK';
+        workingIPs = [];
+        deadIPs = [];
+        progressContainer.style.display = 'none';
+    }
+
+    // Event listeners
+    checkBtn.addEventListener('click', performCheck);
+    clearBtn.addEventListener('click', clearAll);
+    copyBtn.addEventListener('click', copyWorkingIPs);
+
+</script>
+</body>
+</html>

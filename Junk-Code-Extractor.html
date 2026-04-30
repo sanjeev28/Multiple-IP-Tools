@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Junk Code Extractor - Connected Addresses Only</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #eee;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .sub {
+            color: #aaa;
+            margin-bottom: 2rem;
+            border-left: 3px solid #0f0;
+            padding-left: 15px;
+        }
+        .row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .panel {
+            flex: 1;
+            min-width: 400px;
+            background: #0f0f1a;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .panel h3 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: #1e1e2e;
+            border: 1px solid #333;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 12px;
+            border-radius: 8px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #0f0;
+        }
+        button {
+            background: #2ecc71;
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            margin-right: 10px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #27ae60;
+            transform: translateY(-1px);
+        }
+        .copy-btn {
+            background: #3498db;
+        }
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+        .clear-btn {
+            background: #e74c3c;
+        }
+        .clear-btn:hover {
+            background: #c0392b;
+        }
+        .result-box {
+            background: #0a0a12;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 400px;
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #2ecc71;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 1px solid #2c2c3a;
+        }
+        .stats {
+            margin-top: 15px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+        .badge {
+            display: inline-block;
+            background: #2ecc71;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        hr {
+            border-color: #333;
+            margin: 20px 0;
+        }
+        .note {
+            background: #2c2c3a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #bbb;
+            margin-top: 12px;
+        }
+        @media (max-width: 900px) {
+            .row {
+                flex-direction: column;
+            }
+            .panel {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔧 Junk Code Extractor</h1>
+    <div class="sub">Paste ANY table HTML → extracts <strong>Addresses</strong> from rows with <strong style="color:#2ecc71">"Connected"</strong> status → auto changes port <strong>31402 → 31401</strong></div>
+
+    <div class="row">
+        <!-- Left Panel: Input -->
+        <div class="panel">
+            <h3>📋 STEP 1: Paste your junk HTML / table code here</h3>
+            <textarea id="junkInput" placeholder='Paste your entire table HTML here... 
+
+Example:
+<table>
+   ...
+   <tr>
+      <td><span class="badge bg-success">Connected</span></td>
+      <td><code>35.228.152.141:31402</code></td>
+   </tr>
+   ...
+</table>
+
+Supports any messy structure! It will automatically find &lt;table&gt; and scan rows.'></textarea>
+            <div>
+                <button id="extractBtn">✨ EXTRACT CONNECTED ADDRESSES</button>
+                <button id="clearBtn" class="clear-btn">🗑 Clear All</button>
+            </div>
+            <div class="note">
+                ⚡ <strong>How it works:</strong> Extracts ALL rows where Status column contains "Connected" (case-insensitive), 
+                then grabs the Address (looks for &lt;code&gt; or cell text), then replaces <strong>:31402 → :31401</strong>.
+                <br>✅ Ignores Disconnected / offline nodes. Perfect for your massive junk data!
+            </div>
+        </div>
+
+        <!-- Right Panel: Output -->
+        <div class="panel">
+            <h3>✅ RESULT: Clean extracted addresses (port 31402 → 31401)</h3>
+            <div class="result-box" id="resultBox">
+                💡 Waiting for your input...<br>Paste your junk code and click EXTRACT.
+            </div>
+            <div>
+                <button id="copyResultBtn" class="copy-btn">📋 Copy All Results</button>
+            </div>
+            <div class="stats" id="stats">
+                📊 Ready
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM elements
+        const textarea = document.getElementById('junkInput');
+        const extractBtn = document.getElementById('extractBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyResultBtn');
+        const resultBox = document.getElementById('resultBox');
+        const statsSpan = document.getElementById('stats');
+
+        // Helper: Extract ALL addresses from a given HTML string (table junk code)
+        // Returns array of addresses (with ports replaced 31402->31401) from Connected rows
+        function extractAddressesFromJunk(htmlString) {
+            // Create a temporary DOM element to parse the HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            
+            // Find all tables in the parsed document
+            const tables = doc.querySelectorAll('table');
+            if (tables.length === 0) {
+                // If no <table> tag found, try to find any <tr> directly? 
+                // But usually junk code contains table. If not, return empty.
+                return [];
+            }
+
+            const connectedAddresses = [];
+
+            // Iterate through each table
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length < 2) return; // Need at least status + address column
+                    
+                    // ---------- STEP 1: Check if this row has "Connected" status ----------
+                    // Status can be in ANY cell containing badge with "Connected"
+                    // But we need to find which cell is the status column. Common pattern: first td contains Connected badge
+                    // We'll check ALL cells in this row for the word "Connected" (case insensitive)
+                    let isConnected = false;
+                    let addressCell = null;
+                    let addressText = '';
+                    
+                    // First pass: find status
+                    for (let i = 0; i < cells.length; i++) {
+                        const cellText = cells[i].innerText || cells[i].textContent || '';
+                        if (cellText.toLowerCase().includes('connected')) {
+                            isConnected = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!isConnected) return; // Skip disconnected rows
+                    
+                    // ---------- STEP 2: Extract Address from this row ----------
+                    // Address is usually inside <code> tag, or we look for patterns like IP:port
+                    // Try to find <code> element anywhere in the row that contains IP:port pattern
+                    let foundAddress = null;
+                    
+                    // Method 1: Look for <code> tag that contains pattern like xxx.xxx.xxx.xxx:port
+                    const codeElements = row.querySelectorAll('code');
+                    for (let code of codeElements) {
+                        const codeText = code.textContent.trim();
+                        // Check if it looks like an IP:port (has numbers and colon)
+                        if (codeText.match(/\d+\.\d+\.\d+\.\d+:\d+/)) {
+                            foundAddress = codeText;
+                            break;
+                        }
+                    }
+                    
+                    // Method 2: If no code tag found, scan all cells for IP:port pattern
+                    if (!foundAddress) {
+                        for (let i = 0; i < cells.length; i++) {
+                            const cellText = cells[i].textContent.trim();
+                            if (cellText.match(/\d+\.\d+\.\d+\.\d+:\d+/)) {
+                                foundAddress = cellText;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Method 3: Sometimes address is just plain text in a specific column (like 3rd td)
+                    if (!foundAddress && cells.length >= 3) {
+                        // Check the third cell (index 2) - common for Address column
+                        const possibleAddr = cells[2].textContent.trim();
+                        if (possibleAddr.match(/\d+\.\d+\.\d+\.\d+:\d+/) || possibleAddr.includes(':')) {
+                            foundAddress = possibleAddr;
+                        }
+                    }
+                    
+                    if (foundAddress) {
+                        // Apply port replacement: 31402 → 31401
+                        let modifiedAddress = foundAddress;
+                        if (foundAddress.includes(':31402')) {
+                            modifiedAddress = foundAddress.replace(/:31402\b/g, ':31401');
+                        }
+                        connectedAddresses.push(modifiedAddress);
+                    }
+                });
+            });
+            
+            return connectedAddresses;
+        }
+
+        // Main extraction & display function
+        function performExtraction() {
+            const rawJunk = textarea.value;
+            if (!rawJunk.trim()) {
+                resultBox.innerHTML = '⚠️ Please paste some junk HTML/table code first.';
+                statsSpan.innerHTML = '📊 No input provided.';
+                return;
+            }
+            
+            resultBox.innerHTML = '🔄 Processing...';
+            statsSpan.innerHTML = '📊 Scanning your junk code...';
+            
+            // Small delay to show processing (UI friendly)
+            setTimeout(() => {
+                const addresses = extractAddressesFromJunk(rawJunk);
+                
+                if (addresses.length === 0) {
+                    resultBox.innerHTML = '🔍 No "Connected" nodes found.\n\nMake sure your HTML contains:\n- Rows with "Connected" text/badge\n- Addresses like IP:port inside &lt;code&gt; tags\n- Or any cell with IP:port pattern';
+                    statsSpan.innerHTML = `📊 Found 0 connected addresses. Check if status contains "Connected".`;
+                    return;
+                }
+                
+                // Display results nicely
+                const resultText = addresses.join('\n');
+                resultBox.innerHTML = resultText;
+                statsSpan.innerHTML = `📊 ✅ Extracted ${addresses.length} address(es) from rows with "Connected" status | Port 31402 → 31401 applied`;
+                
+                // Store results for copying
+                resultBox.setAttribute('data-full', resultText);
+            }, 10);
+        }
+        
+        // Copy results to clipboard
+        function copyResults() {
+            const content = resultBox.innerText;
+            if (!content || content.includes('Waiting for your input') || content.includes('No "Connected" nodes found') || content.includes('Please paste')) {
+                alert('No valid extracted data to copy. First paste junk code and click EXTRACT.');
+                return;
+            }
+            
+            navigator.clipboard.writeText(content).then(() => {
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.innerText = '📋 Copy All Results';
+                }, 2000);
+            }).catch(() => {
+                alert('Could not copy. Select text manually.');
+            });
+        }
+        
+        // Clear everything
+        function clearAll() {
+            textarea.value = '';
+            resultBox.innerHTML = '💡 Ready for new junk code...<br>Paste your data and click EXTRACT.';
+            statsSpan.innerHTML = '📊 Cleared. Paste new junk code.';
+        }
+        
+        // Event listeners
+        extractBtn.addEventListener('click', performExtraction);
+        clearBtn.addEventListener('click', clearAll);
+        copyBtn.addEventListener('click', copyResults);
+        
+        // Optional: Example placeholder with the sample data you provided
+        // So user can test immediately
+        const sampleJunk = `<table class="table">
+<thead>
+<tr><th>Status</th><th>Node ID</th><th>Address</th><th>Type</th><th>Location</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><div class="d-flex align-items-center"><span class="d-inline-block me-2" style="width: 12px; height: 12px; background-color: rgb(255, 153, 0); border-radius: 50%;"></span><span class="small badge bg-success">Connected</span></div></td>
+<td><div class="d-flex align-items-center"><code class="small text-truncate" style="max-width: 120px;">GAYPBJ45...4TKL56PL</code><i class="bi bi-copy text-muted"></i></div></td>
+<td><code class="small">35.228.152.141:31402</code></td>
+<td><div><span class="small badge bg-primary">Validator</span><span class="ms-1 small badge bg-warning">Core Team</span></div></td>
+<td><div class="small">Lappeenranta, Finland</div></td>
+</tr>
+<tr>
+<td><span class="badge bg-danger">Disconnected</span></td>
+<td><code>NODE123</code></td>
+<td><code>10.0.0.1:8080</code></td>
+<td>RPC</td>
+<td>USA</td>
+</tr>
+<tr>
+<td><span class="badge bg-success">Connected</span></td>
+<td><code>NODE456</code></td>
+<td><code>192.168.1.100:31402</code></td>
+<td>Validator</td>
+<td>Finland</td>
+</tr>
+<tr>
+<td><span class="badge bg-success">Connected</span></td>
+<td><code>NODE789</code></td>
+<td><code>203.0.113.5:9000</code></td>
+<td>Full Node</td>
+<td>Germany</td>
+</tr>
+</tbody>
+</table>`;
+        
+        // Optional: Add a small helper text to pre-fill example (double click on label maybe not, but provide tip)
+        // For user convenience, show a "Load Example" button? But keep minimal. Let's add a subtle link.
+        const noteDiv = document.querySelector('.note');
+        const exampleLink = document.createElement('span');
+        exampleLink.style.color = '#2ecc71';
+        exampleLink.style.cursor = 'pointer';
+        exampleLink.style.textDecoration = 'underline';
+        exampleLink.style.marginLeft = '12px';
+        exampleLink.innerHTML = '📋 Load example junk data';
+        exampleLink.onclick = () => {
+            textarea.value = sampleJunk;
+            performExtraction();
+        };
+        noteDiv.appendChild(exampleLink);
+    })();
+</script>
+</body>
+</html>
