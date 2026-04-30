@@ -11,6 +11,7 @@
 ---
 
 ## 📂 Project Structure
+
 ```bash
 Multiple-IP-Tools/
 ├── All-in-one.html
@@ -18,53 +19,3 @@ Multiple-IP-Tools/
 ├── Node-IP-Checker.html
 ├── Pi-Network-Node-Checker.html
 └── README.md
-
----
-
-
-## 🔧 Tools Included
-
-### 🌐 All-in-One Tool
-✔ Multiple utilities in one place  
-✔ Saves time  
-✔ Easy switching between tools  
-
----
-
-### 🧹 Junk Code Extractor
-✔ Clean messy data  
-✔ Remove duplicates  
-✔ Extract useful content  
-
----
-
-### 🔍 Node IP Checker
-✔ Check multiple IPs  
-✔ Detect active/inactive nodes  
-✔ Fast bulk checking  
-
----
-
-### 🔗 Pi Network Node Checker
-✔ Monitor Pi Nodes  
-✔ Check node availability  
-✔ Simple diagnostics  
-
----
-
-## ⚡ Features
-
-✨ No installation required  
-✨ Runs directly in browser  
-✨ Lightweight & fast  
-✨ Beginner-friendly UI  
-✨ 100% client-side  
-
----
-
-## 🚀 How to Use
-
-### 📥 Clone Repository
-```bash
-git clone https://github.com/sanjeev28/Multiple-IP-Tools.git
-cd Multiple-IP-Tools
